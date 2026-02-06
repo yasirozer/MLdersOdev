@@ -1,0 +1,22 @@
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+import pandas as pd
+
+# Load your data
+X_df = pd.read_excel("bas-kilo.ods", engine="odf")
+y_df = pd.read_excel("cinsiyet.ods", engine="odf")
+
+# Features and labels
+X = X_df[["Bascevre", "Kilo"]]
+y = y_df["Cinsiyet"]
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the KNeighborsClassifier
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+# Evaluate the model
+accuracy = knn.score(X_test, y_test)
+print(f"Accuracy: {accuracy}")
