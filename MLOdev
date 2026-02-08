@@ -1,6 +1,22 @@
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
 import pandas as pd
+
+MALE_LABEL = "Erkek"
+FEMALE_LABEL = "Kadin"
+MIN_MALE_WEIGHT = 50
+
+
+def predict_with_constraint(model, features_df: pd.DataFrame):
+    preds = model.predict(features_df).copy()
+
+    # Hard rule: never predict "Erkek" below the weight threshold.
+    low_weight_mask = features_df["Kilo"] < MIN_MALE_WEIGHT
+    male_mask = preds == MALE_LABEL
+    preds[low_weight_mask & male_mask] = FEMALE_LABEL
+
+    return preds
 
 # Load your data
 X_df = pd.read_excel("bas-kilo.ods", engine="odf")
@@ -17,6 +33,14 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 knn = KNeighborsClassifier(n_neighbors=5)
 knn.fit(X_train, y_train)
 
-# Evaluate the model
-accuracy = knn.score(X_test, y_test)
-print(f"Accuracy: {accuracy}")
+# Evaluate with hard constraint on the whole test set
+y_pred_constrained = predict_with_constraint(knn, X_test)
+accuracy = accuracy_score(y_test, y_pred_constrained)
+print(f"Accuracy (with constraint): {accuracy}")
+
+# Example with constraint
+sample = pd.DataFrame([{"Bascevre": 54, "Kilo": 47}])
+raw_pred = knn.predict(sample)[0]
+constrained_pred = predict_with_constraint(knn, sample)[0]
+print(f"Raw prediction: {raw_pred}")
+print(f"Prediction with constraint: {constrained_pred}")
